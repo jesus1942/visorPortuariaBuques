@@ -2,6 +2,8 @@
 
 PWA (aplicación web progresiva) para ver desde el celular los **movimientos de buques del Puerto de Puerto Madryn**: buques amarrados, anunciados/por llegar y zarpes.
 
+> **Idea y proyecto de [@jesus1942](https://github.com/jesus1942)** · Desarrollo asistido con Claude Code · Datos de la [APPM](https://appm.com.ar/movbuquesdinamica).
+
 Los datos salen de la [planilla dinámica pública de la APPM](https://appm.com.ar/movbuquesdinamica) (Administración Portuaria de Puerto Madryn), que la app lee directamente desde el navegador. **No requiere login, ni servidor, ni base de datos.**
 
 ## Características
@@ -38,5 +40,11 @@ icons/                Íconos de la app
 ## Cómo funciona
 
 La página de APPM incrusta una planilla de Google Sheets pública. Esta app descarga esa misma planilla en formato CSV (`.../gviz/tq?tqx=out:csv`), la parsea en el navegador y muestra cada buque como una tarjeta con su amarre, zarpe, sitio, actividad y estado (`AMARRADO`, `ZARPO`, `NAVEGANDO`, `RADA`, `GOLFO`, anunciado, etc.). La última respuesta se guarda en `localStorage` para poder consultarla sin conexión.
+
+## Créditos
+
+- **Idea y dirección del proyecto**: [@jesus1942](https://github.com/jesus1942)
+- **Desarrollo**: asistido con Claude Code
+- **Datos**: Administración Portuaria de Puerto Madryn (APPM)
 
 > App no oficial. Los datos pertenecen a la Administración Portuaria de Puerto Madryn.
