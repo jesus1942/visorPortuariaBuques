@@ -16,9 +16,10 @@ Los datos salen de la [planilla dinámica pública de la APPM](https://appm.com.
 
 ## Cómo publicar en GitHub Pages
 
-1. En GitHub, ir a **Settings → Pages**.
-2. En **Build and deployment → Source**, elegir **GitHub Actions**.
-3. Hacer un push a la rama `main` (o ejecutar el workflow *Publicar en GitHub Pages* manualmente desde la pestaña **Actions**).
+> ⚠️ **Importante**: en cuentas gratuitas de GitHub, Pages solo funciona con **repositorios públicos**. Si el repo es privado, primero hacerlo público en **Settings → General → Danger Zone → Change repository visibility**.
+
+1. En GitHub, ir a **Settings → Pages** y en **Build and deployment → Source** elegir **GitHub Actions** (el workflow también intenta habilitarlo solo).
+2. Ir a la pestaña **Actions**, abrir el workflow *Publicar en GitHub Pages* y ejecutarlo con **Run workflow** (también corre automáticamente con cada push).
 
 La app queda disponible en `https://<usuario>.github.io/visorPortuariaBuques/`.
 
