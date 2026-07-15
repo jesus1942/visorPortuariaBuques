@@ -197,7 +197,7 @@
       ['Sitio', it.sitio],
       ['Posición', it.posicion],
       ['Movimientos', it.movimientos],
-      ['Fecha operación', it.fecha],
+      ['Opera (estimado)', it.fecha],
       ['Actividad', it.actividad],
       ['Detalle', it.detalle],
       ['Servicios', it.servicios],
@@ -215,6 +215,20 @@
         '🌍 Ver última posición del buque en el mapa (AIS)</a>';
     }
     return '<div class="detail"><table>' + table + '</table>' + mapa + '</div>';
+  }
+
+  /* Amarre/Zarpe; para buques anunciados que aún no amarraron muestra la
+     llegada estimada (hora prevista de operación o día anunciado en la planilla). */
+  function timesHTML(it) {
+    var pending = !it.amarre &&
+      (it.cat === 'navegando' || it.cat === 'rada' || it.cat === 'golfo' || it.cat === 'programado');
+    if (pending) {
+      var est = it.fecha || (it.day ? ddmm(it.day) : '—');
+      return '<div class="t est"><small>Llegada estimada</small><b>' + esc(est) + '</b></div>' +
+        '<div class="t dep"><small>Zarpe</small><b>' + esc(it.zarpe || '—') + '</b></div>';
+    }
+    return '<div class="t arr"><small>Amarre</small><b>' + esc(fmtTimeRef(it.amarre, it.day)) + '</b></div>' +
+      '<div class="t dep"><small>Zarpe</small><b>' + esc(it.zarpe || '—') + '</b></div>';
   }
 
   function cardHTML(it) {
@@ -241,10 +255,7 @@
       (claseLine ? '<span class="ship-class">' + esc(claseLine) + '</span>' : '') +
       '</div>' +
       '<span class="badge ' + it.cat + '">' + esc(badge) + '</span></div>' +
-      '<div class="times">' +
-      '<div class="t arr"><small>Amarre</small><b>' + esc(fmtTimeRef(it.amarre, it.day)) + '</b></div>' +
-      '<div class="t dep"><small>Zarpe</small><b>' + esc(it.zarpe || '—') + '</b></div>' +
-      '</div>' +
+      '<div class="times">' + timesHTML(it) + '</div>' +
       (chips.length ? '<div class="meta">' + chips.join('') + '</div>' : '') +
       (notes.length ? '<div class="note">' + esc(notes.join(' · ')) + '</div>' : '') +
       detailHTML(it) +

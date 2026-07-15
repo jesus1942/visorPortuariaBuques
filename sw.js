@@ -1,6 +1,6 @@
 /* Service worker: cachea la carcasa de la app para uso sin conexión.
    Los datos de la planilla se guardan en localStorage desde app.js. */
-var CACHE = 'buques-pm-v3';
+var CACHE = 'buques-pm-v4';
 var SHELL = [
   './',
   'index.html',
