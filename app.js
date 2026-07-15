@@ -496,6 +496,7 @@
   /* ---------------- notificaciones (OneSignal) ---------------- */
 
   var basePath = location.pathname.replace(/[^/]*$/, '');
+  var osSDK = null; // referencia al SDK una vez inicializado
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(function (OneSignal) {
     return OneSignal.init({
@@ -503,34 +504,55 @@
       serviceWorkerPath: basePath + 'sw.js',
       serviceWorkerParam: { scope: basePath },
       allowLocalhostAsSecureOrigin: true
+    }).then(function () {
+      osSDK = OneSignal;
+      onSdkReady();
     });
   });
 
   var $notifBtn = document.getElementById('notifBtn');
   var $notifModal = document.getElementById('notifModal');
   var $notifStatus = document.getElementById('notifStatus');
+  var $notifSave = document.getElementById('notifSave');
   var CATS = { fresco: 'catFresco', congelado: 'catCongelado', mercante: 'catMercante' };
 
   function setNotifStatus(msg) { $notifStatus.textContent = msg; }
 
+  /* El botón queda deshabilitado hasta que el SDK esté listo: en iPhone el
+     permiso debe pedirse en el mismo instante del toque, sin esperas. */
+  function onSdkReady() {
+    $notifSave.disabled = false;
+    if (!$notifModal.classList.contains('hidden')) refreshNotifModal();
+  }
+
+  function refreshNotifModal() {
+    if (!osSDK) {
+      $notifSave.disabled = true;
+      setNotifStatus('Preparando el servicio de avisos…');
+      setTimeout(function () {
+        if (!osSDK && !$notifModal.classList.contains('hidden')) {
+          setNotifStatus('El servicio de avisos no responde. Revisá tu conexión, cerrá la app y volvé a abrirla.');
+        }
+      }, 12000);
+      return;
+    }
+    $notifSave.disabled = false;
+    setNotifStatus(osSDK.Notifications.permission
+      ? 'Los avisos ya están activados en este dispositivo. Podés cambiar las categorías y guardar.'
+      : '');
+    try {
+      Promise.resolve(osSDK.User.getTags ? osSDK.User.getTags() : null).then(function (t) {
+        if (!t) return;
+        Object.keys(CATS).forEach(function (c) {
+          if (t[c] !== undefined) document.getElementById(CATS[c]).checked = t[c] === '1';
+        });
+      }).catch(function () { });
+    } catch (e) { /* etiquetas no disponibles aún */ }
+  }
+
   $notifBtn.addEventListener('click', function () {
     $notifModal.classList.remove('hidden');
-    setNotifStatus('');
-    // Reflejar las categorías ya elegidas, si el SDK está disponible.
-    window.OneSignalDeferred.push(function (OneSignal) {
-      try {
-        var tags = OneSignal.User.getTags ? OneSignal.User.getTags() : null;
-        Promise.resolve(tags).then(function (t) {
-          if (!t) return;
-          Object.keys(CATS).forEach(function (c) {
-            if (t[c] !== undefined) document.getElementById(CATS[c]).checked = t[c] === '1';
-          });
-        }).catch(function () { });
-        if (OneSignal.Notifications.permission) {
-          setNotifStatus('Los avisos ya están activados en este dispositivo. Podés cambiar las categorías y guardar.');
-        }
-      } catch (e) { /* SDK aún cargando */ }
-    });
+    refreshNotifModal();
   });
 
   document.getElementById('notifClose').addEventListener('click', function () {
@@ -541,39 +563,30 @@
     if (e.target === $notifModal) $notifModal.classList.add('hidden');
   });
 
-  document.getElementById('notifSave').addEventListener('click', function () {
-    if (!window.OneSignal && !window.OneSignalDeferred) {
-      setNotifStatus('No se pudo cargar el servicio de avisos. Revisá tu conexión.');
-      return;
-    }
-    setNotifStatus('Activando…');
-    var timeoutId = setTimeout(function () {
-      setNotifStatus('El servicio de avisos está tardando. Revisá tu conexión e intentá de nuevo.');
-    }, 15000);
-    window.OneSignalDeferred.push(function (OneSignal) {
-      var tags = {};
-      Object.keys(CATS).forEach(function (c) {
-        tags[c] = document.getElementById(CATS[c]).checked ? '1' : '0';
-      });
-      return OneSignal.Notifications.requestPermission()
-        .then(function () {
-          clearTimeout(timeoutId);
-          if (!OneSignal.Notifications.permission) {
-            setNotifStatus('El permiso de notificaciones fue rechazado. Activalo desde la configuración del navegador para este sitio.');
-            return;
-          }
-          return Promise.resolve(OneSignal.User.addTags(tags)).then(function () {
-            var elegidas = Object.keys(tags).filter(function (c) { return tags[c] === '1'; });
-            setNotifStatus(elegidas.length
-              ? '✅ Avisos activados: ' + elegidas.join(', ') + '. Vas a recibir una notificación cuando haya actividad programada.'
-              : 'Guardado, pero no elegiste ninguna categoría: no vas a recibir avisos.');
-          });
-        })
-        .catch(function () {
-          clearTimeout(timeoutId);
-          setNotifStatus('No se pudieron activar los avisos. Si usás iPhone, primero instalá la app en la pantalla de inicio (Compartir → Agregar a inicio) y probá desde ahí.');
-        });
+  $notifSave.addEventListener('click', function () {
+    if (!osSDK) { refreshNotifModal(); return; }
+    var tags = {};
+    Object.keys(CATS).forEach(function (c) {
+      tags[c] = document.getElementById(CATS[c]).checked ? '1' : '0';
     });
+    setNotifStatus('Activando…');
+    // Pedir el permiso inmediatamente, dentro del gesto del usuario (clave en iPhone).
+    osSDK.Notifications.requestPermission()
+      .then(function () {
+        if (!osSDK.Notifications.permission) {
+          setNotifStatus('El permiso fue rechazado. Activalo para este sitio desde la configuración de notificaciones del teléfono e intentá de nuevo.');
+          return;
+        }
+        return Promise.resolve(osSDK.User.addTags(tags)).then(function () {
+          var elegidas = Object.keys(tags).filter(function (c) { return tags[c] === '1'; });
+          setNotifStatus(elegidas.length
+            ? '✅ Avisos activados: ' + elegidas.join(', ') + '. Vas a recibir una notificación cuando haya actividad programada.'
+            : 'Guardado, pero no elegiste ninguna categoría: no vas a recibir avisos.');
+        });
+      })
+      .catch(function (err) {
+        setNotifStatus('No se pudieron activar los avisos (' + (err && err.message ? err.message : 'error desconocido') + '). En iPhone, la app debe estar instalada en la pantalla de inicio.');
+      });
   });
 
   load();
