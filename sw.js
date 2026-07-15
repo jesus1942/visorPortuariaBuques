@@ -3,12 +3,13 @@
    Los datos de la planilla se guardan en localStorage desde app.js. */
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-var CACHE = 'buques-pm-v7';
+var CACHE = 'buques-pm-v8';
 var SHELL = [
   './',
   'index.html',
   'styles.css',
   'app.js',
+  'ship-data.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',

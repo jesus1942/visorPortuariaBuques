@@ -87,6 +87,7 @@
       };
       item.cat = categorize(item);
       item.zarpeDate = parseShipDate(item.zarpe, item.day);
+      item.dir = lookupShip(item.buque);
       if (current) current.items.push(item);
       else { current = { date: null, items: [item] }; days.push(current); }
     });
@@ -136,10 +137,21 @@
     return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
-  /* Texto donde busca el buscador: nombre, clase, actividad, detalle, estado, etc. */
+  /* Clave normalizada para el directorio de buques (ship-data.js). */
+  function shipKey(name) {
+    return norm(name).replace(/\(.*?\)/g, '').replace(/[^a-z0-9 ]/g, '')
+      .replace(/\s+/g, ' ').trim().toUpperCase();
+  }
+
+  function lookupShip(name) {
+    return (window.SHIP_DIRECTORY || {})[shipKey(name)] || {};
+  }
+
+  /* Texto donde busca el buscador: nombre, clase, actividad, empresa, matrícula, etc. */
   function haystack(it) {
     return norm([it.buque, it.clase, it.actividad, it.detalle, it.estado,
-      it.servicios, it.observacion, it.sitio ? 'sitio ' + it.sitio : ''].join(' '));
+      it.servicios, it.observacion, it.posicion, it.sitio ? 'sitio ' + it.sitio : '',
+      it.dir.empresa || '', it.dir.matricula || '', it.dir.tipo || ''].join(' '));
   }
 
   function sameDay(a, b) {
@@ -188,10 +200,19 @@
 
   /* ---------------- render ---------------- */
 
-  /* Detalle expandible: todos los campos de la planilla + enlace al mapa AIS. */
+  /* Campo con contenido real (descarta vacíos, '#N/A' y marcas internas). */
+  function meaningful(v) {
+    var t = String(v || '').trim();
+    return t && t !== '#N/A' && norm(t) !== 'obs';
+  }
+
+  /* Detalle expandible: campos con datos de la planilla + directorio + enlaces. */
   function detailHTML(it) {
     var rows = [
-      ['Amarre', fmtTimeRef(it.amarre, it.day)],
+      ['Empresa / armador', it.dir.empresa],
+      ['Matrícula', it.dir.matricula],
+      ['Tipo registrado', it.dir.tipo],
+      ['Amarre', it.amarre ? fmtTimeRef(it.amarre, it.day) : ''],
       ['Zarpe', it.zarpe],
       ['Clase', it.clase],
       ['Estado', it.estado || (BADGES[it.cat] || '')],
@@ -205,17 +226,21 @@
       ['Observación', it.observacion],
       ['Obs.', it.obs],
       ['Pasavante', it.pasavante]
-    ];
+    ].filter(function (r) { return meaningful(r[1]); });
     var table = rows.map(function (r) {
-      return '<tr><th>' + r[0] + '</th><td>' + esc(r[1] || '—') + '</td></tr>';
+      return '<tr><th>' + r[0] + '</th><td>' + esc(r[1]) + '</td></tr>';
     }).join('');
-    var mapa = '';
+    var links = '';
     if (it.cat !== 'aviso') {
-      var q = encodeURIComponent(it.buque.replace(/\(.*?\)/g, '').trim());
-      mapa = '<a class="ais" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' + q + '">' +
-        '🌍 Ver última posición del buque en el mapa (AIS)</a>';
+      var nombre = it.buque.replace(/\(.*?\)/g, '').trim();
+      links = '<div class="detail-actions">' +
+        '<a class="ais" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' +
+        encodeURIComponent(nombre) + '">🌍 Posición en el mapa (AIS)</a>' +
+        '<a class="ais" target="_blank" rel="noopener" href="https://www.google.com/search?q=' +
+        encodeURIComponent(nombre + ' buque ' + (it.clase || '').toLowerCase()) + '">🔎 Buscar datos del buque</a>' +
+        '</div>';
     }
-    return '<div class="detail"><table>' + table + '</table>' + mapa + '</div>';
+    return '<div class="detail"><table>' + table + '</table>' + links + '</div>';
   }
 
   /* Amarre/Zarpe; para buques anunciados que aún no amarraron muestra la
@@ -256,6 +281,7 @@
       (claseLine ? '<span class="ship-class">' + esc(claseLine) + '</span>' : '') +
       '</div>' +
       '<span class="badge ' + it.cat + '">' + esc(badge) + '</span></div>' +
+      (it.dir.empresa ? '<div class="owner-line">🏢 ' + esc(it.dir.empresa) + '</div>' : '') +
       '<div class="times">' + timesHTML(it) + '</div>' +
       (chips.length ? '<div class="meta">' + chips.join('') + '</div>' : '') +
       (notes.length ? '<div class="note">' + esc(notes.join(' · ')) + '</div>' : '') +
@@ -457,10 +483,23 @@
     });
   }
 
+  var $clearSearch = document.getElementById('clearSearch');
+
   $search.addEventListener('input', function () {
     state.query = $search.value;
+    $clearSearch.classList.toggle('hidden', !state.query);
     render();
   });
+
+  $clearSearch.addEventListener('click', function () {
+    $search.value = '';
+    state.query = '';
+    $clearSearch.classList.add('hidden');
+    $search.focus();
+    render();
+  });
+
+  window.addEventListener('online', function () { load(); });
 
   document.querySelectorAll('.tab').forEach(function (btn) {
     btn.addEventListener('click', function () {

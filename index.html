@@ -42,7 +42,8 @@
       </div>
     </div>
     <div class="search-row">
-      <input id="search" type="search" inputmode="search" placeholder="Buscar buque, tipo o carga (ej: congelado)…" autocomplete="off" aria-label="Buscar buque, tipo o carga">
+      <input id="search" type="search" inputmode="search" placeholder="Buscar buque, empresa, tipo o carga…" autocomplete="off" aria-label="Buscar buque, empresa, tipo o carga">
+      <button id="clearSearch" class="clear-search hidden" type="button" aria-label="Limpiar búsqueda">×</button>
     </div>
     <nav class="tabs" role="tablist" aria-label="Filtros">
       <button class="tab active" data-tab="actual" role="tab" aria-selected="true">Actual</button>
@@ -86,6 +87,7 @@
     <p class="foot-small">App no oficial · Se actualiza automáticamente cada 10 minutos</p>
   </footer>
 
+  <script src="ship-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
