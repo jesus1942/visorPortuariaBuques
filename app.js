@@ -7,6 +7,8 @@
   var REFRESH_MS = 10 * 60 * 1000;
   var LS_CSV = 'buquesPM.csv';
   var LS_TIME = 'buquesPM.time';
+  // Enlace de Mercado Pago para aportes. Al completarlo aparece el botón en el pie.
+  var DONATION_URL = '';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -133,6 +135,12 @@
     return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
+  /* Texto donde busca el buscador: nombre, clase, actividad, detalle, estado, etc. */
+  function haystack(it) {
+    return norm([it.buque, it.clase, it.actividad, it.detalle, it.estado,
+      it.servicios, it.observacion, it.sitio ? 'sitio ' + it.sitio : ''].join(' '));
+  }
+
   function sameDay(a, b) {
     return a && b && a.getFullYear() === b.getFullYear() &&
       a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -179,6 +187,36 @@
 
   /* ---------------- render ---------------- */
 
+  /* Detalle expandible: todos los campos de la planilla + enlace al mapa AIS. */
+  function detailHTML(it) {
+    var rows = [
+      ['Amarre', fmtTimeRef(it.amarre, it.day)],
+      ['Zarpe', it.zarpe],
+      ['Clase', it.clase],
+      ['Estado', it.estado || (BADGES[it.cat] || '')],
+      ['Sitio', it.sitio],
+      ['Posición', it.posicion],
+      ['Movimientos', it.movimientos],
+      ['Fecha operación', it.fecha],
+      ['Actividad', it.actividad],
+      ['Detalle', it.detalle],
+      ['Servicios', it.servicios],
+      ['Observación', it.observacion],
+      ['Obs.', it.obs],
+      ['Pasavante', it.pasavante]
+    ];
+    var table = rows.map(function (r) {
+      return '<tr><th>' + r[0] + '</th><td>' + esc(r[1] || '—') + '</td></tr>';
+    }).join('');
+    var mapa = '';
+    if (it.cat !== 'aviso') {
+      var q = encodeURIComponent(it.buque.replace(/\(.*?\)/g, '').trim());
+      mapa = '<a class="ais" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' + q + '">' +
+        '🌍 Ver última posición del buque en el mapa (AIS)</a>';
+    }
+    return '<div class="detail"><table>' + table + '</table>' + mapa + '</div>';
+  }
+
   function cardHTML(it) {
     var badge = BADGES[it.cat] || it.estado || '';
     if (it.cat === 'aviso' && it.estado) badge = it.estado === 'CERRADO' ? 'Sitio cerrado' : 'Aviso';
@@ -197,7 +235,7 @@
     if (it.observacion && it.observacion !== '#N/A') notes.push(it.observacion);
     if (it.obs && it.obs !== 'obs' && it.obs !== '#N/A') notes.push(it.obs);
 
-    return '<article class="card">' +
+    return '<article class="card expandable">' +
       '<div class="card-top"><div>' +
       '<div class="ship-name">' + esc(it.buque) + '</div>' +
       (claseLine ? '<span class="ship-class">' + esc(claseLine) + '</span>' : '') +
@@ -209,6 +247,8 @@
       '</div>' +
       (chips.length ? '<div class="meta">' + chips.join('') + '</div>' : '') +
       (notes.length ? '<div class="note">' + esc(notes.join(' · ')) + '</div>' : '') +
+      detailHTML(it) +
+      '<div class="expand-hint" aria-hidden="true">▾</div>' +
       '</article>';
   }
 
@@ -249,7 +289,11 @@
     var html = '';
 
     if (q) {
-      var found = items.filter(function (it) { return norm(it.buque).indexOf(q) !== -1; });
+      var tokens = q.split(/\s+/);
+      var found = items.filter(function (it) {
+        var hs = haystack(it);
+        return tokens.every(function (t) { return hs.indexOf(t) !== -1; });
+      });
       html = found.length
         ? '<p class="section-title">' + found.length + ' resultado' + (found.length === 1 ? '' : 's') + '</p>' +
           groupedHTML(found, 'desc', false)
@@ -367,6 +411,19 @@
   /* ---------------- eventos ---------------- */
 
   $refresh.addEventListener('click', function () { load(); });
+
+  // Tocar una tarjeta la expande/contrae (los enlaces internos siguen funcionando).
+  $content.addEventListener('click', function (e) {
+    if (e.target.closest('a')) return;
+    var card = e.target.closest('.card.expandable');
+    if (card) card.classList.toggle('open');
+  });
+
+  if (DONATION_URL) {
+    var row = document.getElementById('donateRow');
+    var link = document.getElementById('donateLink');
+    if (row && link) { link.href = DONATION_URL; row.classList.remove('hidden'); }
+  }
 
   $search.addEventListener('input', function () {
     state.query = $search.value;
