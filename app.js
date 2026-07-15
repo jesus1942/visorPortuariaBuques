@@ -10,6 +10,7 @@
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
   var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
+  var APP_VER = 'v9';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -535,19 +536,51 @@
   /* ---------------- notificaciones (OneSignal) ---------------- */
 
   var basePath = location.pathname.replace(/[^/]*$/, '');
-  var osSDK = null; // referencia al SDK una vez inicializado
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(function (OneSignal) {
-    return OneSignal.init({
-      appId: ONESIGNAL_APP_ID,
-      serviceWorkerPath: basePath + 'sw.js',
-      serviceWorkerParam: { scope: basePath },
-      allowLocalhostAsSecureOrigin: true
-    }).then(function () {
-      osSDK = OneSignal;
-      onSdkReady();
+  var osSDK = null;      // referencia al SDK una vez inicializado
+  var osError = '';      // diagnóstico si algo impide iniciar
+
+  function setOsError(msg) {
+    if (osSDK) return;
+    osError = msg;
+    if (!$notifModal.classList.contains('hidden')) refreshNotifModal();
+  }
+
+  function loadOneSignal() {
+    var esIphone = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!('Notification' in window)) {
+      setOsError(esIphone
+        ? 'Este iPhone no permite notificaciones acá. Requisitos: iOS 16.4 o más nuevo, la app instalada en la pantalla de inicio (Compartir → Agregar a pantalla de inicio) y abierta desde ese ícono.'
+        : 'Este navegador no soporta notificaciones web. Probá con Chrome o Firefox actualizados.');
+      return;
+    }
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(function (OneSignal) {
+      return OneSignal.init({
+        appId: ONESIGNAL_APP_ID,
+        serviceWorkerPath: basePath + 'sw.js',
+        serviceWorkerParam: { scope: basePath },
+        allowLocalhostAsSecureOrigin: true
+      }).then(function () {
+        osSDK = OneSignal;
+        osError = '';
+        onSdkReady();
+      }).catch(function (err) {
+        setOsError('El servicio de avisos falló al iniciar: ' + ((err && err.message) || err || 'error desconocido'));
+      });
     });
-  });
+    var s = document.createElement('script');
+    s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+    s.defer = true;
+    s.onerror = function () {
+      setOsError('No se pudo descargar el servicio de avisos. Puede estar bloqueado por un bloqueador de contenido, un DNS con filtro o la red. La app funciona igual; solo fallan los avisos.');
+    };
+    document.head.appendChild(s);
+    setTimeout(function () {
+      if (!osSDK && !osError) {
+        setOsError('El servicio de avisos no terminó de iniciar (el resto de la app funciona normal). Cerrá la app por completo, volvé a abrirla y reintentá.');
+      }
+    }, 20000);
+  }
 
   var $notifBtn = document.getElementById('notifBtn');
   var $notifModal = document.getElementById('notifModal');
@@ -567,12 +600,7 @@
   function refreshNotifModal() {
     if (!osSDK) {
       $notifSave.disabled = true;
-      setNotifStatus('Preparando el servicio de avisos…');
-      setTimeout(function () {
-        if (!osSDK && !$notifModal.classList.contains('hidden')) {
-          setNotifStatus('El servicio de avisos no responde. Revisá tu conexión, cerrá la app y volvé a abrirla.');
-        }
-      }, 12000);
+      setNotifStatus(osError || 'Preparando el servicio de avisos…');
       return;
     }
     $notifSave.disabled = false;
@@ -628,5 +656,9 @@
       });
   });
 
+  var $ver = document.getElementById('verLine');
+  if ($ver) $ver.textContent += ' · ' + APP_VER;
+
+  loadOneSignal();
   load();
 })();
