@@ -523,6 +523,8 @@ main {
 
 .notif-primary { background: var(--accent); color: #fff; }
 
+.notif-primary:disabled { opacity: .5; cursor: default; }
+
 .notif-secondary { background: var(--gray-bg); color: var(--text); }
 
 /* ---------- Pie ---------- */
