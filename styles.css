@@ -586,3 +586,34 @@ main {
 .foot a { color: var(--accent); text-decoration: none; }
 
 .foot-small { font-size: .72rem; }
+
+/* ---------- Banner del desarrollador ---------- */
+.dev-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(100deg, #0d3b66 0%, #14508a 55%, #1b6fb8 100%);
+  color: #fff;
+  text-decoration: none;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+}
+
+.dev-banner-mark {
+  font-size: 1.5rem;
+  background: rgba(255, 255, 255, .15);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.dev-banner-text { display: flex; flex-direction: column; line-height: 1.35; }
+
+.dev-banner-text strong { font-size: .95rem; letter-spacing: .02em; }
+
+.dev-banner-text small { font-size: .72rem; color: #bcd2e8; }
+
+.dev-banner:active { filter: brightness(1.15); }
