@@ -1,4 +1,4 @@
-# Buques Puerto Madryn 🚢
+# Buques Puerto Madryn
 
 PWA (aplicación web progresiva) para ver desde el celular los **movimientos de buques del Puerto de Puerto Madryn**: buques amarrados, anunciados/por llegar y zarpes.
 
@@ -8,17 +8,17 @@ Los datos salen de la [planilla dinámica pública de la APPM](https://appm.com.
 
 ## Características
 
-- 📱 **PWA instalable**: se puede agregar a la pantalla de inicio en Android e iOS y se abre como una app.
-- 🔄 **Datos en vivo**: lee la planilla oficial de APPM y se actualiza automáticamente cada 10 minutos (y con el botón de refrescar).
-- ⚓ **Pestaña "Actual"**: resumen de buques en puerto, por llegar y zarpes del día, más avisos del puerto.
-- 🛳 **Pestaña "Zarpados"**: historial de zarpes agrupado por día.
-- 🔎 **Búsqueda** por nombre de buque (ignora mayúsculas y tildes).
-- 📴 **Funciona sin conexión**: guarda los últimos datos y la app misma en caché.
-- 🌙 Modo claro/oscuro automático según el sistema.
+- **PWA instalable**: se puede agregar a la pantalla de inicio en Android e iOS y se abre como una app.
+- **Datos en vivo**: lee la planilla oficial de APPM y se actualiza automáticamente cada 10 minutos (y con el botón de refrescar).
+- **Pestaña "Actual"**: resumen de buques en puerto, por llegar y zarpes del día, más avisos del puerto.
+- **Pestaña "Zarpados"**: historial de zarpes agrupado por día.
+- **Búsqueda** por nombre de buque (ignora mayúsculas y tildes).
+- **Funciona sin conexión**: guarda los últimos datos y la app misma en caché.
+- Modo claro/oscuro automático según el sistema.
 
 ## Cómo publicar en GitHub Pages
 
-> ⚠️ **Importante**: en cuentas gratuitas de GitHub, Pages solo funciona con **repositorios públicos**. Si el repo es privado, primero hacerlo público en **Settings → General → Danger Zone → Change repository visibility**.
+> **Importante**: en cuentas gratuitas de GitHub, Pages solo funciona con **repositorios públicos**. Si el repo es privado, primero hacerlo público en **Settings → General → Danger Zone → Change repository visibility**.
 
 1. En GitHub, ir a **Settings → Pages** y en **Build and deployment → Source** elegir **GitHub Actions** (el workflow también intenta habilitarlo solo).
 2. Ir a la pestaña **Actions**, abrir el workflow *Publicar en GitHub Pages* y ejecutarlo con **Run workflow** (también corre automáticamente con cada push).
@@ -48,3 +48,8 @@ La página de APPM incrusta una planilla de Google Sheets pública. Esta app des
 - **Datos**: Administración Portuaria de Puerto Madryn (APPM)
 
 > App no oficial. Los datos pertenecen a la Administración Portuaria de Puerto Madryn.
+
+## Derechos
+
+© 2026 [@jesus1942](https://github.com/jesus1942). Todos los derechos reservados.
+El código y el diseño de esta aplicación no pueden republicarse ni redistribuirse sin autorización del autor.
