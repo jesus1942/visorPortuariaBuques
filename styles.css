@@ -467,6 +467,19 @@ main {
 
 .foot p { margin: 3px 0; }
 
+.foot-strong {
+  font-weight: 700;
+  color: var(--text);
+  font-size: .9rem;
+  margin-bottom: 8px !important;
+}
+
+.portfolio {
+  display: inline-block;
+  font-weight: 700;
+  padding: 6px 4px 12px;
+}
+
 .foot a { color: var(--accent); text-decoration: none; }
 
 .foot-small { font-size: .72rem; }
