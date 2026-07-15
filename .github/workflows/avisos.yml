@@ -1,0 +1,33 @@
+name: Avisos de actividad portuaria
+
+on:
+  schedule:
+    - cron: '15 */2 * * *'   # cada 2 horas
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: avisos
+  cancel-in-progress: false
+
+jobs:
+  avisos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Leer planilla y enviar notificaciones
+        env:
+          ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
+        run: python3 scripts/enviar_avisos.py
+      - name: Guardar registro de avisos enviados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/avisos_enviados.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Registro de avisos enviados [skip ci]"
+            git pull --rebase && git push
+          fi

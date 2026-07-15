@@ -9,6 +9,7 @@
   var LS_TIME = 'buquesPM.time';
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
+  var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -491,6 +492,89 @@
       navigator.serviceWorker.register('sw.js').catch(function () { /* sin SW */ });
     });
   }
+
+  /* ---------------- notificaciones (OneSignal) ---------------- */
+
+  var basePath = location.pathname.replace(/[^/]*$/, '');
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(function (OneSignal) {
+    return OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      serviceWorkerPath: basePath + 'sw.js',
+      serviceWorkerParam: { scope: basePath },
+      allowLocalhostAsSecureOrigin: true
+    });
+  });
+
+  var $notifBtn = document.getElementById('notifBtn');
+  var $notifModal = document.getElementById('notifModal');
+  var $notifStatus = document.getElementById('notifStatus');
+  var CATS = { fresco: 'catFresco', congelado: 'catCongelado', mercante: 'catMercante' };
+
+  function setNotifStatus(msg) { $notifStatus.textContent = msg; }
+
+  $notifBtn.addEventListener('click', function () {
+    $notifModal.classList.remove('hidden');
+    setNotifStatus('');
+    // Reflejar las categorías ya elegidas, si el SDK está disponible.
+    window.OneSignalDeferred.push(function (OneSignal) {
+      try {
+        var tags = OneSignal.User.getTags ? OneSignal.User.getTags() : null;
+        Promise.resolve(tags).then(function (t) {
+          if (!t) return;
+          Object.keys(CATS).forEach(function (c) {
+            if (t[c] !== undefined) document.getElementById(CATS[c]).checked = t[c] === '1';
+          });
+        }).catch(function () { });
+        if (OneSignal.Notifications.permission) {
+          setNotifStatus('Los avisos ya están activados en este dispositivo. Podés cambiar las categorías y guardar.');
+        }
+      } catch (e) { /* SDK aún cargando */ }
+    });
+  });
+
+  document.getElementById('notifClose').addEventListener('click', function () {
+    $notifModal.classList.add('hidden');
+  });
+
+  $notifModal.addEventListener('click', function (e) {
+    if (e.target === $notifModal) $notifModal.classList.add('hidden');
+  });
+
+  document.getElementById('notifSave').addEventListener('click', function () {
+    if (!window.OneSignal && !window.OneSignalDeferred) {
+      setNotifStatus('No se pudo cargar el servicio de avisos. Revisá tu conexión.');
+      return;
+    }
+    setNotifStatus('Activando…');
+    var timeoutId = setTimeout(function () {
+      setNotifStatus('El servicio de avisos está tardando. Revisá tu conexión e intentá de nuevo.');
+    }, 15000);
+    window.OneSignalDeferred.push(function (OneSignal) {
+      var tags = {};
+      Object.keys(CATS).forEach(function (c) {
+        tags[c] = document.getElementById(CATS[c]).checked ? '1' : '0';
+      });
+      return OneSignal.Notifications.requestPermission()
+        .then(function () {
+          clearTimeout(timeoutId);
+          if (!OneSignal.Notifications.permission) {
+            setNotifStatus('El permiso de notificaciones fue rechazado. Activalo desde la configuración del navegador para este sitio.');
+            return;
+          }
+          return Promise.resolve(OneSignal.User.addTags(tags)).then(function () {
+            var elegidas = Object.keys(tags).filter(function (c) { return tags[c] === '1'; });
+            setNotifStatus(elegidas.length
+              ? '✅ Avisos activados: ' + elegidas.join(', ') + '. Vas a recibir una notificación cuando haya actividad programada.'
+              : 'Guardado, pero no elegiste ninguna categoría: no vas a recibir avisos.');
+          });
+        })
+        .catch(function () {
+          clearTimeout(timeoutId);
+          setNotifStatus('No se pudieron activar los avisos. Si usás iPhone, primero instalá la app en la pantalla de inicio (Compartir → Agregar a inicio) y probá desde ahí.');
+        });
+    });
+  });
 
   load();
 })();

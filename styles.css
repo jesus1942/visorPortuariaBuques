@@ -105,6 +105,12 @@ body {
   color: #bcd2e8;
 }
 
+.header-btns {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .icon-btn {
   flex-shrink: 0;
   background: rgba(255, 255, 255, .12);
@@ -455,6 +461,69 @@ main {
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ---------- Modal de avisos ---------- */
+.notif-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(9, 40, 70, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.notif-modal.hidden { display: none; }
+
+.notif-box {
+  background: var(--card);
+  color: var(--text);
+  border-radius: 16px;
+  padding: 20px 18px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+}
+
+.notif-box h3 { margin: 0 0 8px; }
+
+.notif-box p { margin: 0 0 12px; font-size: .9rem; color: var(--muted); }
+
+.notif-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  font-size: .95rem;
+  border-top: 1px solid var(--line);
+}
+
+.notif-opt input { width: 20px; height: 20px; }
+
+.notif-status {
+  min-height: 1em;
+  font-size: .85rem !important;
+  color: var(--accent) !important;
+  margin-top: 10px !important;
+}
+
+.notif-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+.notif-primary, .notif-secondary {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: .95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.notif-primary { background: var(--accent); color: #fff; }
+
+.notif-secondary { background: var(--gray-bg); color: var(--text); }
 
 /* ---------- Pie ---------- */
 .foot {
