@@ -10,7 +10,7 @@
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
   var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
-  var APP_VER = 'v9';
+  var APP_VER = 'v10';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -557,6 +557,7 @@
     window.OneSignalDeferred.push(function (OneSignal) {
       return OneSignal.init({
         appId: ONESIGNAL_APP_ID,
+        safari_web_id: 'web.onesignal.auto.13dd012d-81c7-44d8-8660-15690626d9c4',
         serviceWorkerPath: basePath + 'sw.js',
         serviceWorkerParam: { scope: basePath },
         allowLocalhostAsSecureOrigin: true
