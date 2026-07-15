@@ -1,6 +1,9 @@
-/* Service worker: cachea la carcasa de la app para uso sin conexión.
+/* Service worker: cachea la carcasa de la app para uso sin conexión y
+   recibe las notificaciones push (OneSignal).
    Los datos de la planilla se guardan en localStorage desde app.js. */
-var CACHE = 'buques-pm-v5';
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
+var CACHE = 'buques-pm-v6';
 var SHELL = [
   './',
   'index.html',

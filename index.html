@@ -14,6 +14,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Buques PM">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -25,12 +26,20 @@
           <p id="updated" class="updated">Cargando…</p>
         </div>
       </div>
-      <button id="refreshBtn" class="icon-btn" type="button" aria-label="Actualizar datos" title="Actualizar">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
-          <polyline points="21 3 21 9 15 9"></polyline>
-        </svg>
-      </button>
+      <div class="header-btns">
+        <button id="notifBtn" class="icon-btn" type="button" aria-label="Avisos de actividad" title="Avisos de actividad">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
+          </svg>
+        </button>
+        <button id="refreshBtn" class="icon-btn" type="button" aria-label="Actualizar datos" title="Actualizar">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+            <polyline points="21 3 21 9 15 9"></polyline>
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="search-row">
       <input id="search" type="search" inputmode="search" placeholder="Buscar buque, tipo o carga (ej: congelado)…" autocomplete="off" aria-label="Buscar buque, tipo o carga">
@@ -44,6 +53,21 @@
 
   <div id="offlineBanner" class="banner hidden">
     Sin conexión: mostrando los últimos datos guardados.
+  </div>
+
+  <div id="notifModal" class="notif-modal hidden" role="dialog" aria-labelledby="notifTitle">
+    <div class="notif-box">
+      <h3 id="notifTitle">🔔 Avisos de actividad</h3>
+      <p>Recibí una notificación con 12-24&nbsp;hs de anticipación cuando haya trabajo de carga o descarga programado. Elegí qué te interesa:</p>
+      <label class="notif-opt"><input type="checkbox" id="catFresco" checked> 🐟 Fresco (cajoneros)</label>
+      <label class="notif-opt"><input type="checkbox" id="catCongelado" checked> ❄️ Congelado (pesqueros)</label>
+      <label class="notif-opt"><input type="checkbox" id="catMercante" checked> 🚢 Mercantes (aluminio, mineral, contenedores)</label>
+      <p id="notifStatus" class="notif-status"></p>
+      <div class="notif-actions">
+        <button id="notifSave" class="notif-primary" type="button">Activar avisos</button>
+        <button id="notifClose" class="notif-secondary" type="button">Cerrar</button>
+      </div>
+    </div>
   </div>
 
   <main id="content" aria-live="polite">
