@@ -7,8 +7,8 @@
   var REFRESH_MS = 10 * 60 * 1000;
   var LS_CSV = 'buquesPM.csv';
   var LS_TIME = 'buquesPM.time';
-  // Enlace de Mercado Pago para aportes. Al completarlo aparece el botón en el pie.
-  var DONATION_URL = '';
+  // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
+  var DONATION_ALIAS = 'denovaje';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -419,10 +419,30 @@
     if (card) card.classList.toggle('open');
   });
 
-  if (DONATION_URL) {
-    var row = document.getElementById('donateRow');
-    var link = document.getElementById('donateLink');
-    if (row && link) { link.href = DONATION_URL; row.classList.remove('hidden'); }
+  var $donate = document.getElementById('donateBtn');
+  if ($donate) {
+    var donateHTML = $donate.innerHTML;
+    $donate.addEventListener('click', function () {
+      var ok = function () {
+        $donate.innerHTML = '✅ Alias <b>' + DONATION_ALIAS + '</b> copiado. Pegalo en Mercado Pago o en tu banco. ¡Gracias!';
+        setTimeout(function () { $donate.innerHTML = donateHTML; }, 5000);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(DONATION_ALIAS).then(ok, function () { fallbackCopy(); });
+      } else {
+        fallbackCopy();
+      }
+      function fallbackCopy() {
+        var ta = document.createElement('textarea');
+        ta.value = DONATION_ALIAS;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); ok(); } catch (e) { /* sin portapapeles */ }
+        document.body.removeChild(ta);
+      }
+    });
   }
 
   $search.addEventListener('input', function () {

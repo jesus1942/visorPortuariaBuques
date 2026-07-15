@@ -418,12 +418,16 @@ main {
 .donate {
   display: inline-block;
   background: var(--blue-bg);
-  color: var(--blue) !important;
+  color: var(--blue);
   font-weight: 700;
+  font-size: .85rem;
+  font-family: inherit;
+  border: none;
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 11px 16px;
   margin-bottom: 4px;
-  text-decoration: none !important;
+  cursor: pointer;
+  max-width: 100%;
 }
 
 .empty {
