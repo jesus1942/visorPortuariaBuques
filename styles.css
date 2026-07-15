@@ -329,6 +329,7 @@ main {
 
 .times .t.arr { border-left-color: var(--green); }
 .times .t.dep { border-left-color: var(--blue); }
+.times .t.est { border-left-color: var(--amber); }
 
 .times .t small {
   display: block;
