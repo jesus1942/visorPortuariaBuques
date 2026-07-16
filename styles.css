@@ -258,6 +258,120 @@ main {
   letter-spacing: .04em;
 }
 
+/* ---------- Croquis del muelle ---------- */
+.croquis { margin: 4px 0 12px; }
+
+.croquis-toggle {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: .92rem;
+  font-weight: 700;
+  padding: 13px 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cq-chev { transition: transform .2s; color: var(--muted); }
+
+.croquis-toggle.open { border-radius: var(--radius) var(--radius) 0 0; }
+
+.croquis-toggle.open .cq-chev { transform: rotate(180deg); }
+
+.croquis-body {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 10px 10px 4px;
+}
+
+.croquis-body.hidden { display: none; }
+
+.cq-sitio { margin-bottom: 12px; }
+
+.cq-sitio-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: .82rem;
+  margin: 0 2px 5px;
+}
+
+.cq-nota {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--orange);
+  background: var(--orange-bg);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+.cq-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+}
+
+.cq-cell {
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cq-cell.full { border-style: solid; border-color: var(--accent); }
+
+.cq-cell small {
+  font-size: .56rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--muted);
+  text-align: center;
+}
+
+.cq-ship {
+  border: none;
+  background: var(--blue-bg);
+  color: var(--blue);
+  font-family: inherit;
+  font-size: .62rem;
+  font-weight: 700;
+  line-height: 1.15;
+  border-radius: 6px;
+  padding: 4px 2px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.cq-sinpos {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+  font-size: .7rem;
+  color: var(--muted);
+}
+
+.cq-leyenda {
+  font-size: .7rem;
+  color: var(--muted);
+  text-align: center;
+  margin: 4px 0 8px;
+}
+
 .section-title {
   margin: 20px 4px 10px;
   font-size: .82rem;
