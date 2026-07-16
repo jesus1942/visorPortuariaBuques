@@ -3,14 +3,15 @@
   'use strict';
 
   var SHEET_ID = '1ngrSwwqTimfaHQHaNAovd5uIzFCTVB_J10dHe4m37rQ';
-  var CSV_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=0';
+  var CSV_BASE = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv';
+  var CSV_URL = CSV_BASE + '&gid=0';
   var REFRESH_MS = 10 * 60 * 1000;
   var LS_CSV = 'buquesPM.csv';
   var LS_TIME = 'buquesPM.time';
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
   var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
-  var APP_VER = 'v13';
+  var APP_VER = 'v14';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -22,8 +23,15 @@
     query: '',
     fetchedAt: null,
     fromCache: false,
-    timer: null
+    timer: null,
+    situ: { salidas: {}, rada: [] },  // hoja "Situacion": salida estimada + rada/golfo
+    operativas: [],                   // hoja "Operativas": próximas operaciones
+    contactos: []                     // hoja "Informacion": teléfonos del puerto
   };
+
+  /* Armadoras aprendidas de la hoja "Situacion" de APPM (persisten entre visitas). */
+  var LEARNED = {};
+  try { LEARNED = JSON.parse(localStorage.getItem('buquesPM.armadoras')) || {}; } catch (e) { }
 
   var $content = document.getElementById('content');
   var $updated = document.getElementById('updated');
@@ -89,6 +97,7 @@
       item.cat = categorize(item);
       item.zarpeDate = parseShipDate(item.zarpe, item.day);
       item.dir = lookupShip(item.buque);
+      item.salidaEst = state.situ.salidas[shipKey(item.buque)] || '';
       if (current) current.items.push(item);
       else { current = { date: null, items: [item] }; days.push(current); }
     });
@@ -145,7 +154,15 @@
   }
 
   function lookupShip(name) {
-    return (window.SHIP_DIRECTORY || {})[shipKey(name)] || {};
+    var key = shipKey(name);
+    var base = (window.SHIP_DIRECTORY || {})[key] || {};
+    if (LEARNED[key]) {
+      var merged = {};
+      Object.keys(base).forEach(function (k) { merged[k] = base[k]; });
+      merged.empresa = LEARNED[key]; // el dato de APPM manda
+      return merged;
+    }
+    return base;
   }
 
   /* Texto donde busca el buscador: nombre, clase, actividad, empresa, matrícula, etc. */
@@ -215,6 +232,7 @@
       ['Tipo registrado', it.dir.tipo],
       ['Amarre', it.amarre ? fmtTimeRef(it.amarre, it.day) : ''],
       ['Zarpe', it.zarpe],
+      ['Salida estimada', it.cat === 'amarrado' ? it.salidaEst : ''],
       ['Clase', it.clase],
       ['Estado', it.estado || (BADGES[it.cat] || '')],
       ['Sitio', it.sitio],
@@ -253,6 +271,10 @@
       var est = it.fecha || (it.day ? ddmm(it.day) : '—');
       return '<div class="t est"><small>Llegada estimada</small><b>' + esc(est) + '</b></div>' +
         '<div class="t dep"><small>Zarpe</small><b>' + esc(it.zarpe || '—') + '</b></div>';
+    }
+    if (it.cat === 'amarrado' && !it.zarpe && it.salidaEst) {
+      return '<div class="t arr"><small>Amarre</small><b>' + esc(fmtTimeRef(it.amarre, it.day)) + '</b></div>' +
+        '<div class="t est"><small>Salida estimada</small><b>' + esc(it.salidaEst) + '</b></div>';
     }
     return '<div class="t arr"><small>Amarre</small><b>' + esc(fmtTimeRef(it.amarre, it.day)) + '</b></div>' +
       '<div class="t dep"><small>Zarpe</small><b>' + esc(it.zarpe || '—') + '</b></div>';
@@ -447,6 +469,8 @@
       if (zarpesHoy.length) {
         html += '<p class="section-title">Zarparon hoy</p>' + zarpesHoy.map(cardHTML).join('');
       }
+    } else if (state.tab === 'puerto') {
+      html = puertoHTML();
     } else if (state.tab === 'zarpados') {
       var zarpados = items.filter(function (it) { return it.cat === 'zarpo'; });
       html = zarpados.length
@@ -469,6 +493,71 @@
     }
   }
 
+  /* Pestaña Puerto: próximas operativas, buques en rada/golfo y contactos. */
+  function puertoHTML() {
+    var html = '';
+
+    html += '<p class="section-title">Próximas operativas</p>';
+    if (state.operativas.length) {
+      html += state.operativas.map(function (op) {
+        var chips = [];
+        if (op.sitio) chips.push('<span class="chip site">Sitio ' + esc(op.sitio) + '</span>');
+        if (op.actividad) chips.push('<span class="chip">' + esc(op.actividad) + '</span>');
+        if (op.detalle) chips.push('<span class="chip">' + esc(op.detalle) + '</span>');
+        return '<article class="card">' +
+          '<div class="card-top"><div>' +
+          '<div class="ship-name">' + esc(op.buque) + '</div>' +
+          (op.estado ? '<span class="ship-class">' + esc(op.estado.toLowerCase()) + '</span>' : '') +
+          '</div>' +
+          '<span class="badge programado">' + esc(op.fecha || 's/fecha') + '</span></div>' +
+          (chips.length ? '<div class="meta">' + chips.join('') + '</div>' : '') +
+          '</article>';
+      }).join('');
+    } else {
+      html += '<div class="empty">Sin operativas informadas.</div>';
+    }
+
+    html += '<p class="section-title">En rada / golfo / navegando</p>';
+    if (state.situ.rada.length) {
+      html += state.situ.rada.map(function (b) {
+        var badge = { RADA: 'rada', GOLFO: 'golfo', 'R. EXTERIOR': 'rada' }[b.estado] || 'navegando';
+        return '<article class="card">' +
+          '<div class="card-top"><div>' +
+          '<div class="ship-name">' + esc(b.buque) + '</div>' +
+          (b.clase ? '<span class="ship-class">' + esc(b.clase.toLowerCase()) + '</span>' : '') +
+          '</div>' +
+          '<span class="badge ' + badge + '">' + esc(b.estado || '') + '</span></div>' +
+          (b.movs ? '<div class="meta"><span class="chip">' + esc(b.movs) + '</span></div>' : '') +
+          '</article>';
+      }).join('');
+    } else {
+      html += '<div class="empty">No hay buques en rada informados.</div>';
+    }
+
+    if (state.contactos.length) {
+      html += '<p class="section-title">Contactos del puerto (APPM)</p>';
+      var actual = '';
+      state.contactos.forEach(function (ct) {
+        if (ct.titulo !== actual) {
+          actual = ct.titulo;
+          html += '<p class="contact-title">' + esc(actual) + '</p>';
+        }
+        var linked = esc(ct.dato).replace(/(\(?\d[\d\s()-]{6,}\d)/g, function (m) {
+          return '<a href="tel:' + m.replace(/[^\d]/g, '') + '">' + m + '</a>';
+        });
+        html += '<div class="contact-line">' + linked + '</div>';
+      });
+    }
+
+    html += '<p class="section-title">Servicios útiles</p>' +
+      '<div class="meta" style="margin:0 2px">' +
+      '<a class="chip" target="_blank" rel="noopener" href="https://www.hidro.gov.ar/oceanografia/Tmareas/Form_Tmareas.asp">🌊 Tabla de mareas</a>' +
+      '<a class="chip" target="_blank" rel="noopener" href="https://meteorologia.appm.com.ar/">🌤 Clima en el puerto</a>' +
+      '</div>';
+
+    return html;
+  }
+
   function renderError() {
     $content.innerHTML = '<div class="error-box">' +
       '<p>No se pudieron obtener los datos.<br>Revisá tu conexión a internet.</p>' +
@@ -485,6 +574,72 @@
       (sameDay(d, new Date()) ? hm : ddmm(d) + ' ' + hm);
   }
 
+  /* ---------------- hojas complementarias ---------------- */
+
+  /* "Situacion": amarrados con armadora oficial y salida estimada + lista de rada/golfo. */
+  function parseSituacion(text) {
+    var out = { salidas: {}, rada: [] };
+    var learnedNew = false;
+    parseCSV(text).forEach(function (r, i) {
+      if (i === 0) return;
+      var c = function (n) { return (r[n] || '').trim(); };
+      if (c(3)) {
+        var key = shipKey(c(3));
+        if (c(7)) {
+          if (LEARNED[key] !== c(7)) { LEARNED[key] = c(7); learnedNew = true; }
+        }
+        if (c(5)) out.salidas[key] = c(5);
+      }
+      if (c(10)) out.rada.push({ buque: c(10), estado: c(8), clase: c(9), movs: c(11) });
+    });
+    if (learnedNew) {
+      try { localStorage.setItem('buquesPM.armadoras', JSON.stringify(LEARNED)); } catch (e) { }
+    }
+    return out;
+  }
+
+  /* "Operativas": próximas operaciones (la fecha vacía hereda la de la fila anterior). */
+  function parseOperativas(text) {
+    var out = [], fecha = '';
+    parseCSV(text).forEach(function (r, i) {
+      if (i === 0) return;
+      var c = function (n) { return (r[n] || '').trim(); };
+      if (c(0)) fecha = c(0);
+      if (!c(3)) return;
+      out.push({ fecha: fecha, sitio: c(1), actividad: c(2), buque: c(3), detalle: c(4), estado: c(5) });
+    });
+    return out;
+  }
+
+  /* "Informacion": teléfonos de contacto del puerto (líneas bajo CONTACTOS). */
+  function parseInformacion(text) {
+    var out = [], enContactos = false, titulo = '';
+    parseCSV(text).forEach(function (r) {
+      var v = (r[1] || '').trim();
+      if (!v) return;
+      if (v.toUpperCase() === 'CONTACTOS') { enContactos = true; return; }
+      if (!enContactos) return;
+      if (/\d{4,}/.test(v)) out.push({ titulo: titulo, dato: v });
+      else titulo = v;
+    });
+    return out;
+  }
+
+  function fetchSheet(sheetName, lsKey) {
+    return fetch(CSV_BASE + '&sheet=' + encodeURIComponent(sheetName) + '&_=' + Date.now(), { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function (text) {
+        try { localStorage.setItem(lsKey, text); } catch (e) { }
+        return text;
+      })
+      .catch(function () {
+        try { return localStorage.getItem(lsKey); } catch (e) { return null; }
+      });
+  }
+
   /* ---------------- datos ---------------- */
 
   function applyCsv(text, fetchedAt, fromCache) {
@@ -498,21 +653,34 @@
 
   function load() {
     $refresh.classList.add('spinning');
-    return fetch(CSV_URL + '&_=' + Date.now(), { cache: 'no-store' })
+    var extras = Promise.all([
+      fetchSheet('Situacion', 'buquesPM.situ'),
+      fetchSheet('Operativas', 'buquesPM.oper'),
+      fetchSheet('Informacion', 'buquesPM.info')
+    ]).then(function (res) {
+      if (res[0]) try { state.situ = parseSituacion(res[0]); } catch (e) { }
+      if (res[1]) try { state.operativas = parseOperativas(res[1]); } catch (e) { }
+      if (res[2]) try { state.contactos = parseInformacion(res[2]); } catch (e) { }
+    });
+
+    var principal = fetch(CSV_URL + '&_=' + Date.now(), { cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.text();
-      })
-      .then(function (text) {
-        if (text.indexOf('AMARRE') === -1) throw new Error('formato inesperado');
-        var now = Date.now();
-        try {
-          localStorage.setItem(LS_CSV, text);
-          localStorage.setItem(LS_TIME, String(now));
-        } catch (e) { /* almacenamiento lleno o deshabilitado */ }
-        applyCsv(text, now, false);
-      })
-      .catch(function () {
+      });
+
+    return Promise.all([principal.catch(function () { return null; }), extras])
+      .then(function (res) {
+        var text = res[0];
+        if (text && text.indexOf('AMARRE') !== -1) {
+          var now = Date.now();
+          try {
+            localStorage.setItem(LS_CSV, text);
+            localStorage.setItem(LS_TIME, String(now));
+          } catch (e) { /* almacenamiento lleno o deshabilitado */ }
+          applyCsv(text, now, false);
+          return;
+        }
         var cached = null, time = null;
         try {
           cached = localStorage.getItem(LS_CSV);

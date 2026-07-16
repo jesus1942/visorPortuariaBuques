@@ -93,11 +93,17 @@ window.SHIP_DIRECTORY = {
   "XEITOSINO": { empresa: "Xeitosiño S.A.", matricula: "0403", tipo: "Tangonero congelador" },
   "BOUCINA": { empresa: "Bricel S.A.", matricula: "01637", tipo: "Pesquero congelador" },
 
-  /* ---- Fresqueros / cajoneros ---- */
-  "LANZA SECA": { empresa: "Lanzamar S.A.", matricula: "01181", tipo: "Fresquero cajonero" },
+  /* ---- Fresqueros / cajoneros (armadoras según hoja Situacion de APPM) ---- */
+  "LANZA SECA": { empresa: "Summer Blue S.A.", tipo: "Fresquero cajonero" },
   "SALVADOR R": { empresa: "Urbipez S.A.", matricula: "02755", tipo: "Fresquero cajonero" },
   "ACRUX": { empresa: "De Angelis y Logghe S.A.", tipo: "Fresquero cajonero" },
-  "FLORIDA BLANCA": { empresa: "Nedar S.A.", tipo: "Fresquero cajonero" },
+  "FLORIDA BLANCA": { empresa: "Desafío S.A.", tipo: "Fresquero cajonero" },
+  "DESAFIO": { empresa: "Crestas S.A.", tipo: "Fresquero cajonero" },
+
+  /* ---- Otros (armadoras según hoja Situacion de APPM) ---- */
+  "ANABELLA M": { empresa: "Estrella Patagónica S.A.", tipo: "Tangonero congelador" },
+  "VILLARINO II": { empresa: "Pesquera Latitud 46 Grados Sur S.A.", tipo: "Buque pesquero" },
+  "PERSEAS": { empresa: "Antares Servicios Marítimos", tipo: "Mercante" },
 
   /* ---- Mercantes habituales ---- */
   "ARACARI ARROW": { empresa: "Gearbulk", tipo: "Carguero open-hatch (carga de aluminio)" }
