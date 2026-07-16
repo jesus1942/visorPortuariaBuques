@@ -11,11 +11,22 @@
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
   var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
-  var APP_VER = 'v15';
+  var APP_VER = 'v16';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+  /* Íconos de línea propios (SVG dibujados, sin emojis del sistema). */
+  var ICON = {
+    pin: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.5-6.5-11a6.5 6.5 0 0 1 13 0c0 5.5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+    lupa: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.2-4.2"/></svg>',
+    edificio: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 21V10h4a1 1 0 0 1 1 1v10M3 21h18M7 8h2M7 12h2M7 16h2"/></svg>',
+    mapa: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4zM9 4v14M15 6v14"/></svg>',
+    olas: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8c2 0 2 1.6 4 1.6S8 8 10 8s2 1.6 4 1.6S16 8 18 8s2 1.6 4 1.6"/><path d="M2 14c2 0 2 1.6 4 1.6S8 14 10 14s2 1.6 4 1.6 2-1.6 4-1.6 2 1.6 4 1.6"/></svg>',
+    clima: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 2.5v1.5M8 12v1.5M2.5 8h1.5M12 8h1.5M4.1 4.1l1 1M10.9 10.9l1 1M10.9 4.1l-1 1"/><path d="M10 18h7a3 3 0 0 0 .3-6A4.2 4.2 0 0 0 10 11"/></svg>',
+    check: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>'
+  };
 
   var state = {
     days: [],        // [{date, items:[...]}] en el orden de la planilla
@@ -270,9 +281,9 @@
       var nombre = it.buque.replace(/\(.*?\)/g, '').trim();
       links = '<div class="detail-actions">' +
         '<a class="ais" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' +
-        encodeURIComponent(nombre) + '">🌍 Posición en el mapa (AIS)</a>' +
+        encodeURIComponent(nombre) + '">' + ICON.pin + ' Posición en el mapa (AIS)</a>' +
         '<a class="ais" target="_blank" rel="noopener" href="https://www.google.com/search?q=' +
-        encodeURIComponent(nombre + ' buque ' + (it.clase || '').toLowerCase()) + '">🔎 Buscar datos del buque</a>' +
+        encodeURIComponent(nombre + ' buque ' + (it.clase || '').toLowerCase()) + '">' + ICON.lupa + ' Buscar datos del buque</a>' +
         '</div>';
     }
     return '<div class="detail"><table>' + table + '</table>' + links + '</div>';
@@ -320,7 +331,7 @@
       (claseLine ? '<span class="ship-class">' + esc(claseLine) + '</span>' : '') +
       '</div>' +
       '<span class="badge ' + it.cat + '">' + esc(badge) + '</span></div>' +
-      (it.dir.empresa ? '<div class="owner-line">🏢 ' + esc(it.dir.empresa) + '</div>' : '') +
+      (it.dir.empresa ? '<div class="owner-line">' + ICON.edificio + ' ' + esc(it.dir.empresa) + '</div>' : '') +
       '<div class="times">' + timesHTML(it) + '</div>' +
       (chips.length ? '<div class="meta">' + chips.join('') + '</div>' : '') +
       (notes.length ? '<div class="note">' + esc(notes.join(' · ')) + '</div>' : '') +
@@ -389,7 +400,7 @@
 
     return '<section class="croquis">' +
       '<button type="button" class="croquis-toggle" id="croquisToggle">' +
-      '🗺 Croquis del muelle — buques amarrados <span class="cq-chev">▾</span></button>' +
+      ICON.mapa + ' Croquis del muelle — buques amarrados <span class="cq-chev">▾</span></button>' +
       '<div class="croquis-body hidden" id="croquisBody">' +
       (amarrados.length ? html : '<div class="empty">No hay buques amarrados en este momento.</div>') +
       '<p class="cq-leyenda">Posiciones vistas desde el muelle Alte. Storni. Tocá un buque para ver su ficha.</p>' +
@@ -567,8 +578,8 @@
 
     html += '<p class="section-title">Servicios útiles</p>' +
       '<div class="meta" style="margin:0 2px">' +
-      '<a class="chip" target="_blank" rel="noopener" href="https://www.hidro.gov.ar/oceanografia/Tmareas/Form_Tmareas.asp">🌊 Tabla de mareas</a>' +
-      '<a class="chip" target="_blank" rel="noopener" href="https://meteorologia.appm.com.ar/">🌤 Clima en el puerto</a>' +
+      '<a class="chip" target="_blank" rel="noopener" href="https://www.hidro.gov.ar/oceanografia/Tmareas/Form_Tmareas.asp">' + ICON.olas + ' Tabla de mareas</a>' +
+      '<a class="chip" target="_blank" rel="noopener" href="https://meteorologia.appm.com.ar/">' + ICON.clima + ' Clima en el puerto</a>' +
       '</div>';
 
     return html;
@@ -745,7 +756,7 @@
     var donateHTML = $donate.innerHTML;
     $donate.addEventListener('click', function () {
       var ok = function () {
-        $donate.innerHTML = '✅ Alias <b>' + DONATION_ALIAS + '</b> copiado. Pegalo en Mercado Pago o en tu banco. ¡Gracias!';
+        $donate.innerHTML = ICON.check + ' Alias <b>' + DONATION_ALIAS + '</b> copiado. Pegalo en Mercado Pago o en tu banco. ¡Gracias!';
         setTimeout(function () { $donate.innerHTML = donateHTML; }, 5000);
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -942,7 +953,7 @@
         return Promise.resolve(osSDK.User.addTags(tags)).then(function () {
           var elegidas = Object.keys(tags).filter(function (c) { return tags[c] === '1'; });
           setNotifStatus(elegidas.length
-            ? '✅ Avisos activados: ' + elegidas.join(', ') + '. Vas a recibir una notificación cuando haya actividad programada.'
+            ? 'Avisos activados: ' + elegidas.join(', ') + '. Vas a recibir una notificación cuando haya actividad programada.'
             : 'Guardado, pero no elegiste ninguna categoría: no vas a recibir avisos.');
         });
       })
