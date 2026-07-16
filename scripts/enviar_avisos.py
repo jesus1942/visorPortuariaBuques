@@ -34,11 +34,12 @@ CAT_LABELS = {
 
 def categoria(clase, actividad):
     a = actividad.upper()
-    if "FRESCO" in a:
+    cl = clase.upper()
+    if "FRESCO" in a or cl == "CAJONERO":  # un cajonero es siempre fresquero
         return "fresco"
     if "CONGELADO" in a:
         return "congelado"
-    if clase.upper() == "MERCANTE" or any(
+    if cl == "MERCANTE" or any(
         k in a for k in ("ALUMINIO", "MINERAL", "COQUE", "CONTENEDOR", "CARGA")
     ):
         return "mercante"
