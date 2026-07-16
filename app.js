@@ -11,7 +11,7 @@
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
   var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
-  var APP_VER = 'v14';
+  var APP_VER = 'v15';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -101,7 +101,23 @@
       if (current) current.items.push(item);
       else { current = { date: null, items: [item] }; days.push(current); }
     });
+    days.forEach(function (d) { d.items = dedupeDia(d.items); });
     return days.filter(function (d) { return d.items.length; });
+  }
+
+  /* Un mismo buque puede figurar varias veces el mismo día en la planilla
+     (correcciones o cargas contradictorias de APPM). Para no confundir,
+     dejamos una sola fila por buque: la última cargada (la más reciente).
+     Los avisos del puerto (NOVEDAD: buceo, acopio…) no se deduplican. */
+  function dedupeDia(items) {
+    var porBuque = {}, orden = [];
+    items.forEach(function (it) {
+      if (it.cat === 'aviso') { orden.push(it); return; }
+      var k = shipKey(it.buque);
+      if (porBuque[k] === undefined) { porBuque[k] = orden.length; orden.push(it); }
+      else { orden[porBuque[k]] = it; } // conservar la última aparición
+    });
+    return orden;
   }
 
   function categorize(it) {
@@ -884,10 +900,22 @@
     } catch (e) { /* etiquetas no disponibles aún */ }
   }
 
-  $notifBtn.addEventListener('click', function () {
+  function abrirNotifModal() {
     $notifModal.classList.remove('hidden');
     refreshNotifModal();
-  });
+  }
+
+  $notifBtn.addEventListener('click', abrirNotifModal);
+
+  /* La primera vez que se abre la app, mostrar el panel de avisos centrado
+     para que no pase desapercibido. Una sola vez por dispositivo. */
+  function autoPromptNotif() {
+    var yaMostrado;
+    try { yaMostrado = localStorage.getItem('buquesPM.notifPrompted'); } catch (e) { yaMostrado = null; }
+    if (yaMostrado) return;
+    try { localStorage.setItem('buquesPM.notifPrompted', '1'); } catch (e) { }
+    setTimeout(abrirNotifModal, 2500);
+  }
 
   document.getElementById('notifClose').addEventListener('click', function () {
     $notifModal.classList.add('hidden');
@@ -928,4 +956,5 @@
 
   loadOneSignal();
   load();
+  autoPromptNotif();
 })();
