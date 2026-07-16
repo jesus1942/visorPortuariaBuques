@@ -10,7 +10,7 @@
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
   var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
-  var APP_VER = 'v12';
+  var APP_VER = 'v13';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -291,6 +291,73 @@
       '</article>';
   }
 
+  /* Croquis del muelle: sitios 1-6 con posiciones O/CO/C/CE/E y los buques
+     amarrados en cada una (mismos datos de la planilla que generan el plano de APPM). */
+  var POSICIONES = ['O', 'CO', 'C', 'CE', 'E'];
+  var POS_LABELS = { O: 'Oeste', CO: 'C. Oeste', C: 'Centro', CE: 'C. Este', E: 'Este' };
+
+  function croquisHTML(items) {
+    var amarrados = items.filter(function (it) { return it.cat === 'amarrado'; });
+    var avisos = items.filter(function (it) {
+      return it.cat === 'aviso' && it.sitio && it.day &&
+        it.day >= new Date(today().getTime() - 86400000);
+    });
+    var porSitio = {};
+    amarrados.forEach(function (it) {
+      var s = it.sitio || '?';
+      var p = (it.posicion || '').toUpperCase();
+      if (POSICIONES.indexOf(p) === -1) p = '?';
+      porSitio[s] = porSitio[s] || {};
+      (porSitio[s][p] = porSitio[s][p] || []).push(it);
+    });
+
+    var sitios = ['1', '2', '3', '4', '5', '6'];
+    Object.keys(porSitio).forEach(function (s) {
+      if (sitios.indexOf(s) === -1) sitios.push(s);
+    });
+
+    var html = sitios.map(function (s) {
+      var slots = porSitio[s] || {};
+      var notas = avisos.filter(function (a) { return a.sitio === s; });
+      if (s === '?') {
+        var libres = (slots['?'] || []).map(function (b) {
+          return '<button type="button" class="cq-ship" data-ship="' + esc(b.buque) + '">' + esc(b.buque) + '</button>';
+        }).join('');
+        return '<div class="cq-sitio"><div class="cq-sitio-head"><b>Sin sitio informado</b></div>' +
+          '<div class="cq-sinpos">' + libres + '</div></div>';
+      }
+      var celdas = POSICIONES.map(function (p) {
+        var barcos = slots[p] || [];
+        return '<div class="cq-cell' + (barcos.length ? ' full' : '') + '">' +
+          '<small>' + POS_LABELS[p] + '</small>' +
+          barcos.map(function (b) {
+            return '<button type="button" class="cq-ship" data-ship="' + esc(b.buque) + '">' + esc(b.buque) + '</button>';
+          }).join('') +
+          '</div>';
+      }).join('');
+      var sueltos = (slots['?'] || []).map(function (b) {
+        return '<button type="button" class="cq-ship" data-ship="' + esc(b.buque) + '">' + esc(b.buque) + '</button>';
+      }).join('');
+      return '<div class="cq-sitio">' +
+        '<div class="cq-sitio-head"><b>Sitio ' + esc(s) + '</b>' +
+        notas.map(function (n) {
+          return '<span class="cq-nota">' + esc(n.buque + (n.estado === 'CERRADO' ? ' (cerrado)' : '')) + '</span>';
+        }).join('') +
+        '</div>' +
+        '<div class="cq-grid">' + celdas + '</div>' +
+        (sueltos ? '<div class="cq-sinpos"><small>Sin posición:</small>' + sueltos + '</div>' : '') +
+        '</div>';
+    }).join('');
+
+    return '<section class="croquis">' +
+      '<button type="button" class="croquis-toggle" id="croquisToggle">' +
+      '🗺 Croquis del muelle — buques amarrados <span class="cq-chev">▾</span></button>' +
+      '<div class="croquis-body hidden" id="croquisBody">' +
+      (amarrados.length ? html : '<div class="empty">No hay buques amarrados en este momento.</div>') +
+      '<p class="cq-leyenda">Posiciones vistas desde el muelle Alte. Storni. Tocá un buque para ver su ficha.</p>' +
+      '</div></section>';
+  }
+
   function dayHeadHTML(date) {
     var rel = relLabel(date);
     return '<h2 class="day-head">' + esc(fmtDay(date)) +
@@ -362,6 +429,8 @@
         '<div class="pill"><b>' + zarpesHoy.length + '</b><span>Zarpes hoy</span></div>' +
         '</div>';
 
+      html += croquisHTML(items);
+
       if (avisos.length) {
         html += '<p class="section-title">Avisos del puerto</p>' + avisos.map(cardHTML).join('');
       }
@@ -390,6 +459,14 @@
     }
 
     $content.innerHTML = html;
+
+    // Mantener el croquis abierto entre refrescos si el usuario lo dejó abierto.
+    if (croquisAbierto) {
+      var cqBody = document.getElementById('croquisBody');
+      var cqTog = document.getElementById('croquisToggle');
+      if (cqBody) { cqBody.classList.remove('hidden'); }
+      if (cqTog) { cqTog.classList.add('open'); }
+    }
   }
 
   function renderError() {
@@ -454,9 +531,30 @@
   // Tocar una tarjeta la expande/contrae (los enlaces internos siguen funcionando).
   $content.addEventListener('click', function (e) {
     if (e.target.closest('a')) return;
+    var toggle = e.target.closest('#croquisToggle');
+    if (toggle) {
+      var body = document.getElementById('croquisBody');
+      body.classList.toggle('hidden');
+      toggle.classList.toggle('open', !body.classList.contains('hidden'));
+      croquisAbierto = !body.classList.contains('hidden');
+      return;
+    }
+    var ship = e.target.closest('.cq-ship');
+    if (ship) {
+      $search.value = ship.dataset.ship;
+      state.query = ship.dataset.ship;
+      $clearSearch.classList.remove('hidden');
+      render();
+      window.scrollTo({ top: 0 });
+      var first = $content.querySelector('.card');
+      if (first) first.classList.add('open');
+      return;
+    }
     var card = e.target.closest('.card.expandable');
     if (card) card.classList.toggle('open');
   });
+
+  var croquisAbierto = false;
 
   var $donate = document.getElementById('donateBtn');
   if ($donate) {
