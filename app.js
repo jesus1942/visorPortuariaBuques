@@ -11,7 +11,7 @@
   // Alias de Mercado Pago para aportes (se copia al portapapeles al tocar el botón).
   var DONATION_ALIAS = 'denovaje';
   var ONESIGNAL_APP_ID = '82ff32e7-0aa5-48e9-a9b1-1cbe96249a48';
-  var APP_VER = 'v17';
+  var APP_VER = 'v18';
 
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -192,11 +192,23 @@
     return base;
   }
 
+  /* Carga inferida por tipo de buque, para cuando la APPM no cargó la actividad.
+     Un cajonero es siempre fresquero; un mercante mueve carga general. Así una
+     búsqueda por "fresco" encuentra a los cajoneros aunque tengan la casilla vacía. */
+  function cargaInferida(it) {
+    var a = norm(it.actividad), cl = norm(it.clase), out = [];
+    if (a.indexOf('fresco') !== -1 || cl === 'cajonero') out.push('fresco');
+    if (a.indexOf('congelado') !== -1) out.push('congelado');
+    if (cl === 'mercante' || /aluminio|mineral|coque|contenedor|carga/.test(a)) out.push('mercante');
+    return out.join(' ');
+  }
+
   /* Texto donde busca el buscador: nombre, clase, actividad, empresa, matrícula, etc. */
   function haystack(it) {
     return norm([it.buque, it.clase, it.actividad, it.detalle, it.estado,
       it.servicios, it.observacion, it.posicion, it.sitio ? 'sitio ' + it.sitio : '',
-      it.dir.empresa || '', it.dir.matricula || '', it.dir.tipo || ''].join(' '));
+      it.dir.empresa || '', it.dir.matricula || '', it.dir.tipo || ''].join(' ')) +
+      ' ' + cargaInferida(it);
   }
 
   function sameDay(a, b) {
